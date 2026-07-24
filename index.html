@@ -10,20 +10,26 @@
       * { box-sizing:border-box; }
       body { margin:0; min-width:320px; background:var(--paper); color:var(--ink); font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
       main { max-width:560px; margin:0 auto; padding:28px 18px 44px; }
-      header { display:flex; gap:13px; align-items:center; margin:12px 0 28px; }
+      header { display:grid; gap:18px; margin:12px 0 28px; }
+      .brand { width:118px; height:auto; display:block; }
+      .title-row { display:flex; gap:13px; align-items:center; }
       .mark { display:grid; place-items:center; width:46px; height:46px; border-radius:14px; color:#fff; background:var(--brand); }
       h1 { margin:0; font-size:22px; letter-spacing:-.04em; } .eyebrow { margin:0 0 2px; color:var(--muted); font-size:13px; }
       .card { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:20px; box-shadow:0 10px 25px rgba(20,33,27,.045); }
       .stack { display:grid; gap:16px; } .hidden { display:none !important; }
       label { display:grid; gap:7px; font-weight:650; font-size:14px; }
+      label.check { display:flex; align-items:center; gap:10px; font-weight:500; color:var(--muted); }
+      label.check input { width:22px; min-height:22px; height:22px; margin:0; flex:0 0 auto; }
       input,select { width:100%; min-height:48px; padding:11px 12px; border:1px solid #b9c4bc; border-radius:12px; background:#fff; color:var(--ink); font:inherit; }
       input:focus,select:focus,button:focus-visible { outline:3px solid rgba(11,107,74,.23); outline-offset:2px; }
       button,.btn-link { border:0; border-radius:14px; min-height:52px; padding:12px 16px; cursor:pointer; font:700 16px/1 inherit; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
       button:disabled { cursor:not-allowed; opacity:.52; } .primary { color:#fff; background:var(--brand); } .primary:hover { background:var(--brand-dark); }
+      .ghost { background:#fff; color:var(--muted); border:1px solid var(--line); min-height:44px; font:600 14px/1 inherit; }
+      .ghost:hover { background:#faf6f6; color:var(--danger); border-color:#e3c9c9; }
       .drive-btn { background:#e8f3ee; color:var(--brand-dark); border:1px solid #b8d7c8; width:100%; margin-top:8px; font-size:15px; } .drive-btn:hover { background:#d4e8dd; }
       .photo-actions { display:grid; grid-template-columns:1fr 1fr; gap:12px; } .photo-actions button { min-height:112px; display:grid; place-items:center; align-content:center; gap:8px; color:var(--ink); background:#edf4ef; border:1px solid #c8d9cc; }
       .photo-actions button:hover { background:#e1eee4; } .icon { width:30px; height:30px; } .hint { margin:0; color:var(--muted); font-size:14px; } .notice { margin:0; padding:12px 14px; border-radius:12px; background:#eef5ef; color:#24513b; font-size:14px; } .error { background:#fff1f0; color:var(--danger); }
-      .queue { display:grid; gap:9px; margin:0; padding:0; list-style:none; } .item { display:grid; grid-template-columns:40px 1fr auto; gap:11px; align-items:center; padding:11px; border:1px solid var(--line); border-radius:14px; } .thumb { display:grid; place-items:center; width:40px; height:40px; border-radius:10px; color:var(--brand); background:#eaf3ec; } .file-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:650; } .file-meta { color:var(--muted); font-size:12px; } .status { font-size:12px; font-weight:700; color:var(--muted); } .status.success { color:var(--brand); } .status.failed { color:var(--danger); }
+      .queue { display:grid; gap:9px; margin:0; padding:0; list-style:none; } .item { display:grid; grid-template-columns:40px 1fr auto; gap:11px; align-items:center; padding:11px; border:1px solid var(--line); border-radius:14px; } .thumb { display:grid; place-items:center; width:40px; height:40px; border-radius:10px; color:var(--brand); background:#eaf3ec; } .file-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:650; } .file-meta { color:var(--muted); font-size:12px; } .status { font-size:12px; font-weight:700; color:var(--muted); white-space:nowrap; } .status.success { color:var(--brand); } .status.failed { color:var(--danger); }
       .divider { height:1px; background:var(--line); margin:4px 0; } .footer { margin:22px 2px 0; color:var(--muted); font-size:12px; text-align:center; }
       @media (max-width:390px) { main { padding-inline:14px; } .card { padding:16px; } }
     </style>
@@ -31,8 +37,11 @@
   <body>
     <main>
       <header>
-        <div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h3l1.4-2h7.2L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg></div>
-        <div><p class="eyebrow">현장 기록을 바로 모으는 곳</p><h1>행사사진 업로드</h1></div>
+        <img class="brand" src="logo.png" width="232" height="76" alt="예술숲 CREATIVE GROUP ARTS FORÊT">
+        <div class="title-row">
+          <div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h3l1.4-2h7.2L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg></div>
+          <div><p class="eyebrow">현장 기록을 바로 모으는 곳</p><h1>행사사진 업로드</h1></div>
+        </div>
       </header>
 
       <section id="unlock-card" class="card stack" aria-labelledby="unlock-title">
@@ -45,8 +54,11 @@
       <section id="uploader" class="hidden stack" aria-live="polite">
         <div class="card stack">
           <label>행사 구분
+            <input id="event-filter" class="hidden" type="text" placeholder="🔎 행사 이름 검색 (비워두면 전체)" autocomplete="off">
             <select id="event-select" aria-label="행사 선택"></select>
           </label>
+          <button id="hide-event-button" class="ghost hidden" type="button">선택한 행사를 목록에서 내리기</button>
+          <p id="event-message" class="notice hidden" role="alert"></p>
 
           <div id="new-event-box" class="stack">
             <label>행사 이름 (드라이브 폴더명 입력)
@@ -84,6 +96,7 @@
         <section id="queue-card" class="card stack hidden" aria-labelledby="queue-title">
           <div><h2 id="queue-title">업로드할 사진</h2><p id="queue-summary" class="hint"></p></div>
           <ul id="queue" class="queue"></ul>
+          <label class="check"><input id="keep-original" type="checkbox">원본 화질 그대로 올리기 (느립니다)</label>
           <p id="upload-message" class="notice hidden" role="alert"></p>
           <a id="drive-folder-link" class="btn-link drive-btn hidden" target="_blank" rel="noopener">
             📁 구글 드라이브 폴더에서 사진 보기
@@ -91,16 +104,20 @@
           <button id="upload-button" class="primary" type="button">사진 업로드하기</button>
         </section>
       </section>
-      <p class="footer">업로드가 끝날 때까지 이 화면을 닫지 말아 주세요.</p>
+      <p class="footer">업로드하는 동안 이 화면을 켜두세요. 다른 앱으로 넘어가면 멈출 수 있습니다.</p>
     </main>
     <script>
       // 앱스 스크립트 웹앱 주소. [배포 → 새 배포]로 주소가 바뀌면 여기도 같이 바꿀 것.
       const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxf3eo-67Mc_vwNpzIcMLGTYzg8SicUgqtUCrLAkb9ULwZZgc64mjUShqHlrBpulm-FPw/exec';
 
       const NEW_EVENT_VALUE = '__NEW_EVENT__';
+      const FILTER_FROM = 6;        // 행사가 이만큼 쌓이면 검색칸을 띄운다
+      const MAX_EDGE = 2048;        // 줄일 때 긴 변 기준 (px)
+      const JPEG_QUALITY = 0.85;
+
       const state = { accessCode: '', events: [], queue: [], lastFolderUrl: '' };
       const elements = {
-        unlockCard: document.getElementById('unlock-card'), unlockButton: document.getElementById('unlock-button'), accessCode: document.getElementById('access-code'), unlockMessage: document.getElementById('unlock-message'), uploader: document.getElementById('uploader'), eventSelect: document.getElementById('event-select'), newEventBox: document.getElementById('new-event-box'), newEventName: document.getElementById('new-event-name'), dateSelectBox: document.getElementById('date-select-box'), dateSelect: document.getElementById('date-select'), dateInputBox: document.getElementById('date-input-box'), customDateInput: document.getElementById('custom-date-input'), subFolderName: document.getElementById('sub-folder-name'), cameraButton: document.getElementById('camera-button'), galleryButton: document.getElementById('gallery-button'), cameraInput: document.getElementById('camera-input'), galleryInput: document.getElementById('gallery-input'), queueCard: document.getElementById('queue-card'), queue: document.getElementById('queue'), queueSummary: document.getElementById('queue-summary'), uploadButton: document.getElementById('upload-button'), uploadMessage: document.getElementById('upload-message'), driveFolderLink: document.getElementById('drive-folder-link')
+        unlockCard: document.getElementById('unlock-card'), unlockButton: document.getElementById('unlock-button'), accessCode: document.getElementById('access-code'), unlockMessage: document.getElementById('unlock-message'), uploader: document.getElementById('uploader'), eventFilter: document.getElementById('event-filter'), eventSelect: document.getElementById('event-select'), hideEventButton: document.getElementById('hide-event-button'), eventMessage: document.getElementById('event-message'), newEventBox: document.getElementById('new-event-box'), newEventName: document.getElementById('new-event-name'), dateSelectBox: document.getElementById('date-select-box'), dateSelect: document.getElementById('date-select'), dateInputBox: document.getElementById('date-input-box'), customDateInput: document.getElementById('custom-date-input'), subFolderName: document.getElementById('sub-folder-name'), cameraButton: document.getElementById('camera-button'), galleryButton: document.getElementById('gallery-button'), cameraInput: document.getElementById('camera-input'), galleryInput: document.getElementById('gallery-input'), queueCard: document.getElementById('queue-card'), queue: document.getElementById('queue'), queueSummary: document.getElementById('queue-summary'), keepOriginal: document.getElementById('keep-original'), uploadButton: document.getElementById('upload-button'), uploadMessage: document.getElementById('upload-message'), driveFolderLink: document.getElementById('drive-folder-link')
       };
 
       function showMessage(element, message, isError) { element.textContent = message; element.classList.remove('hidden'); element.classList.toggle('error', Boolean(isError)); }
@@ -125,13 +142,55 @@
         return json.data;
       }
 
-      function readAsBase64(file) {
+      function readAsBase64(blob) {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
           reader.onerror = () => reject(new Error('사진을 읽지 못했습니다.'));
-          reader.readAsDataURL(file);
+          reader.readAsDataURL(blob);
         });
+      }
+
+      /**
+       * 긴 변을 MAX_EDGE 로 줄인다. 폰 사진은 대개 원본이 과해서 이것만으로 크게 빨라진다.
+       * 줄일 필요가 없거나 실패하면 null 을 돌려 원본을 그대로 쓰게 한다.
+       */
+      function shrinkImage(file) {
+        return new Promise((resolve) => {
+          const url = URL.createObjectURL(file);
+          const image = new Image();
+          image.onload = () => {
+            URL.revokeObjectURL(url);
+            const scale = Math.min(1, MAX_EDGE / Math.max(image.width, image.height));
+            if (scale === 1) { resolve(null); return; }
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(image.width * scale);
+            canvas.height = Math.round(image.height * scale);
+            canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(
+              (blob) => resolve(blob && blob.size < file.size ? blob : null),
+              'image/jpeg',
+              JPEG_QUALITY
+            );
+          };
+          image.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+          image.src = url;
+        });
+      }
+
+      // 업로드하는 동안 화면이 꺼지지 않게 잡아둔다. 지원하지 않는 기기는 그냥 넘어간다.
+      let wakeLock = null;
+      async function keepScreenAwake(on) {
+        try {
+          if (on && !wakeLock && navigator.wakeLock) {
+            wakeLock = await navigator.wakeLock.request('screen');
+          } else if (!on && wakeLock) {
+            await wakeLock.release();
+            wakeLock = null;
+          }
+        } catch (err) {
+          wakeLock = null;
+        }
       }
 
       async function unlock() {
@@ -140,31 +199,35 @@
         elements.unlockButton.disabled = true; hideMessage(elements.unlockMessage);
         try {
           state.events = await post({ action: 'getActiveEvents', staffCode: code }) || [];
-          state.accessCode = code; renderEvents(); elements.unlockCard.classList.add('hidden'); elements.uploader.classList.remove('hidden');
+          state.accessCode = code;
+          elements.customDateInput.value = localDate();
+          renderEvents();
+          elements.unlockCard.classList.add('hidden'); elements.uploader.classList.remove('hidden');
         } catch (error) { showMessage(elements.unlockMessage, error.message || '인증에 실패했습니다.', true); }
         finally { elements.unlockButton.disabled = false; }
       }
 
       function renderEvents() {
-        const options = [];
-        options.push(new Option('✏️ [새 행사 폴더 만들기] 직접 이름 입력', NEW_EVENT_VALUE));
-        state.events.forEach((event) => {
-          options.push(new Option('📁 기존 목록에서 선택: ' + event.name, event.id));
-        });
-        elements.eventSelect.replaceChildren(...options);
+        const keyword = elements.eventFilter.value.trim().toLowerCase();
+        const matched = state.events.filter((event) => !keyword || event.name.toLowerCase().includes(keyword));
+        const previous = elements.eventSelect.value;
 
-        elements.eventSelect.value = NEW_EVENT_VALUE;
-        elements.customDateInput.value = localDate();
+        const options = [new Option('✏️ [새 행사 폴더 만들기] 직접 이름 입력', NEW_EVENT_VALUE)];
+        matched.forEach((event) => options.push(new Option('📁 ' + event.name, event.id)));
+        elements.eventSelect.replaceChildren(...options);
+        elements.eventSelect.value = matched.some((event) => event.id === previous) ? previous : NEW_EVENT_VALUE;
+
+        elements.eventFilter.classList.toggle('hidden', state.events.length < FILTER_FROM);
         onEventChange();
       }
 
       function onEventChange() {
-        const selected = elements.eventSelect.value;
-        const isNew = selected === NEW_EVENT_VALUE;
+        const isNew = elements.eventSelect.value === NEW_EVENT_VALUE;
 
         elements.newEventBox.classList.toggle('hidden', !isNew);
         elements.dateSelectBox.classList.toggle('hidden', isNew);
         elements.dateInputBox.classList.toggle('hidden', !isNew);
+        elements.hideEventButton.classList.toggle('hidden', isNew);
 
         if (!isNew) {
           renderDates();
@@ -178,6 +241,31 @@
         const preferred = dates.includes(localDate()) ? localDate() : dates[0];
         elements.dateSelect.replaceChildren(...dates.map((date) => new Option(date, date)));
         elements.dateSelect.value = preferred;
+      }
+
+      async function hideSelectedEvent() {
+        const eventId = elements.eventSelect.value;
+        const event = state.events.find((item) => item.id === eventId);
+        if (!event) return;
+        const ok = window.confirm(
+          '"' + event.name + '" 을(를) 목록에서 내립니다.\n\n' +
+          '드라이브의 사진과 폴더는 그대로 남습니다.\n' +
+          '나중에 같은 이름으로 다시 만들면 되살아납니다.'
+        );
+        if (!ok) return;
+
+        elements.hideEventButton.disabled = true;
+        hideMessage(elements.eventMessage);
+        try {
+          await post({ action: 'hideEvent', staffCode: state.accessCode, eventId: eventId });
+          state.events = state.events.filter((item) => item.id !== eventId);
+          renderEvents();
+          showMessage(elements.eventMessage, '"' + event.name + '" 을(를) 목록에서 내렸습니다. 사진은 드라이브에 그대로 있습니다.', false);
+        } catch (error) {
+          showMessage(elements.eventMessage, error.message || '목록에서 내리지 못했습니다.', true);
+        } finally {
+          elements.hideEventButton.disabled = false;
+        }
       }
 
       function addFiles(fileList) {
@@ -212,6 +300,19 @@
 
       async function makeUploadFields(item) {
         const isNew = elements.eventSelect.value === NEW_EVENT_VALUE;
+        let source = item.file;
+        let photoName = item.file.name;
+        let photoType = item.file.type;
+
+        if (!elements.keepOriginal.checked) {
+          const smaller = await shrinkImage(item.file);
+          if (smaller) {
+            source = smaller;
+            photoType = 'image/jpeg';
+            photoName = photoName.replace(/\.[^.]+$/, '') + '.jpg';
+          }
+        }
+
         return {
           action: 'uploadPhoto',
           staffCode: state.accessCode,
@@ -220,18 +321,21 @@
           newEventName: elements.newEventName.value.trim(),
           eventDate: isNew ? elements.customDateInput.value : elements.dateSelect.value,
           subFolderName: elements.subFolderName.value.trim(),
-          photoName: item.file.name,
-          photoType: item.file.type,
-          photoBase64: await readAsBase64(item.file)
+          photoName: photoName,
+          photoType: photoType,
+          photoBase64: await readAsBase64(source)
         };
       }
 
       async function uploadOne(item) {
         item.status = 'uploading';
-        item.message = '업로드 중';
+        item.message = elements.keepOriginal.checked ? '업로드 중' : '사진 줄이는 중';
         renderQueue();
         try {
-          const res = await post(await makeUploadFields(item));
+          const fields = await makeUploadFields(item);
+          item.message = '업로드 중';
+          renderQueue();
+          const res = await post(fields);
           item.status = 'success';
           item.message = '완료';
           if (res && res.folderUrl) {
@@ -256,6 +360,7 @@
         elements.uploadButton.disabled = true;
         hideMessage(elements.uploadMessage);
         elements.driveFolderLink.classList.add('hidden');
+        await keepScreenAwake(true);
 
         let cursor = 0;
         const worker = async () => {
@@ -265,6 +370,7 @@
           }
         };
         await Promise.all(Array.from({ length: Math.min(3, ready.length) }, worker));
+        await keepScreenAwake(false);
         const failed = state.queue.filter((item) => item.status === 'failed').length;
 
         if (failed) {
@@ -281,7 +387,9 @@
 
       elements.unlockButton.addEventListener('click', unlock);
       elements.accessCode.addEventListener('keydown', (event) => { if (event.key === 'Enter') unlock(); });
+      elements.eventFilter.addEventListener('input', renderEvents);
       elements.eventSelect.addEventListener('change', onEventChange);
+      elements.hideEventButton.addEventListener('click', hideSelectedEvent);
       elements.cameraButton.addEventListener('click', () => elements.cameraInput.click());
       elements.galleryButton.addEventListener('click', () => elements.galleryInput.click());
       elements.cameraInput.addEventListener('change', (event) => addFiles(event.target.files));
