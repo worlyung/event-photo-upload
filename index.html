@@ -31,6 +31,14 @@
       .photo-actions button:hover { background:#e1eee4; } .icon { width:30px; height:30px; } .hint { margin:0; color:var(--muted); font-size:14px; } .notice { margin:0; padding:12px 14px; border-radius:12px; background:#eef5ef; color:#24513b; font-size:14px; } .error { background:#fff1f0; color:var(--danger); }
       .queue { display:grid; gap:9px; margin:0; padding:0; list-style:none; } .item { display:grid; grid-template-columns:40px 1fr auto; gap:11px; align-items:center; padding:11px; border:1px solid var(--line); border-radius:14px; } .thumb { display:grid; place-items:center; width:40px; height:40px; border-radius:10px; color:var(--brand); background:#eaf3ec; } .file-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:650; } .file-meta { color:var(--muted); font-size:12px; } .status { font-size:12px; font-weight:700; color:var(--muted); white-space:nowrap; } .status.success { color:var(--brand); } .status.failed { color:var(--danger); }
       .divider { height:1px; background:var(--line); margin:4px 0; } .footer { margin:22px 2px 0; color:var(--muted); font-size:12px; text-align:center; }
+      .new-event-row { display:flex; align-items:center; gap:12px; justify-content:space-between; padding:12px 14px; border:1px dashed #b9c4bc; border-radius:12px; }
+      .new-event-row .name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700; font-size:15px; }
+      .new-event-row .name.empty { color:var(--warn); font-weight:500; }
+      .new-event-row button { flex:0 0 auto; min-height:40px; padding:8px 14px; font:700 14px/1 inherit; }
+      dialog { border:0; padding:22px; width:min(420px, calc(100vw - 36px)); border-radius:var(--radius); color:var(--ink); background:var(--surface); box-shadow:0 20px 50px rgba(20,33,27,.28); }
+      dialog::backdrop { background:rgba(20,33,27,.45); }
+      dialog h2 { margin:0; font-size:18px; letter-spacing:-.03em; }
+      .dialog-actions { display:grid; grid-template-columns:1fr 1.4fr; gap:10px; }
       @media (max-width:390px) { main { padding-inline:14px; } .card { padding:16px; } }
     </style>
   </head>
@@ -60,10 +68,9 @@
           <button id="hide-event-button" class="ghost hidden" type="button">선택한 행사를 목록에서 내리기</button>
           <p id="event-message" class="notice hidden" role="alert"></p>
 
-          <div id="new-event-box" class="stack">
-            <label>행사 이름 (드라이브 폴더명 입력)
-              <input id="new-event-name" type="text" placeholder="예: 2026_신년회_행사" required>
-            </label>
+          <div id="new-event-box" class="new-event-row">
+            <span id="new-event-label" class="name empty">행사 이름을 아직 입력하지 않았습니다</span>
+            <button id="new-event-edit" class="ghost" type="button">이름 입력</button>
           </div>
 
           <div id="date-select-box" class="hidden">
@@ -78,10 +85,14 @@
             </label>
           </div>
 
-          <div>
-            <label>회차 / 세부 폴더 (선택 사항)
-              <input id="sub-folder-name" type="text" placeholder="예: 1회차, 오전세션, A팀 (비워두면 생략)">
-            </label>
+          <div class="stack">
+            <button id="sub-folder-toggle" class="ghost" type="button">＋ 회차 · 세부 폴더로 나누기 (보통은 안 씁니다)</button>
+            <div id="sub-folder-field" class="stack hidden">
+              <label>회차 / 세부 폴더
+                <input id="sub-folder-name" type="text" placeholder="예: 1회차" autocomplete="off">
+              </label>
+              <p class="hint">⚠️ 사람마다 다르게 적으면 폴더가 흩어집니다. 담당자가 정해 준 이름 그대로만 적어 주세요.</p>
+            </div>
           </div>
 
           <div class="divider"></div>
@@ -106,6 +117,20 @@
       </section>
       <p class="footer">업로드하는 동안 이 화면을 켜두세요. 다른 앱으로 넘어가면 멈출 수 있습니다.</p>
     </main>
+
+    <dialog id="new-event-dialog" aria-labelledby="new-event-title">
+      <form method="dialog" class="stack">
+        <h2 id="new-event-title">새 행사 폴더 만들기</h2>
+        <label>행사 이름
+          <input id="new-event-name" type="text" placeholder="예: 2026_신년회_행사" autocomplete="off">
+        </label>
+        <p class="hint">이 이름 그대로 구글 드라이브에 폴더가 만들어집니다.</p>
+        <div class="dialog-actions">
+          <button type="submit" value="cancel" class="ghost">취소</button>
+          <button type="submit" value="ok" class="primary">확인</button>
+        </div>
+      </form>
+    </dialog>
     <script>
       // 앱스 스크립트 웹앱 주소. [배포 → 새 배포]로 주소가 바뀌면 여기도 같이 바꿀 것.
       const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxf3eo-67Mc_vwNpzIcMLGTYzg8SicUgqtUCrLAkb9ULwZZgc64mjUShqHlrBpulm-FPw/exec';
@@ -117,7 +142,7 @@
 
       const state = { accessCode: '', events: [], queue: [], lastFolderUrl: '' };
       const elements = {
-        unlockCard: document.getElementById('unlock-card'), unlockButton: document.getElementById('unlock-button'), accessCode: document.getElementById('access-code'), unlockMessage: document.getElementById('unlock-message'), uploader: document.getElementById('uploader'), eventFilter: document.getElementById('event-filter'), eventSelect: document.getElementById('event-select'), hideEventButton: document.getElementById('hide-event-button'), eventMessage: document.getElementById('event-message'), newEventBox: document.getElementById('new-event-box'), newEventName: document.getElementById('new-event-name'), dateSelectBox: document.getElementById('date-select-box'), dateSelect: document.getElementById('date-select'), dateInputBox: document.getElementById('date-input-box'), customDateInput: document.getElementById('custom-date-input'), subFolderName: document.getElementById('sub-folder-name'), cameraButton: document.getElementById('camera-button'), galleryButton: document.getElementById('gallery-button'), cameraInput: document.getElementById('camera-input'), galleryInput: document.getElementById('gallery-input'), queueCard: document.getElementById('queue-card'), queue: document.getElementById('queue'), queueSummary: document.getElementById('queue-summary'), keepOriginal: document.getElementById('keep-original'), uploadButton: document.getElementById('upload-button'), uploadMessage: document.getElementById('upload-message'), driveFolderLink: document.getElementById('drive-folder-link')
+        unlockCard: document.getElementById('unlock-card'), unlockButton: document.getElementById('unlock-button'), accessCode: document.getElementById('access-code'), unlockMessage: document.getElementById('unlock-message'), uploader: document.getElementById('uploader'), eventFilter: document.getElementById('event-filter'), eventSelect: document.getElementById('event-select'), hideEventButton: document.getElementById('hide-event-button'), eventMessage: document.getElementById('event-message'), newEventBox: document.getElementById('new-event-box'), newEventLabel: document.getElementById('new-event-label'), newEventEdit: document.getElementById('new-event-edit'), newEventDialog: document.getElementById('new-event-dialog'), newEventName: document.getElementById('new-event-name'), subFolderToggle: document.getElementById('sub-folder-toggle'), subFolderField: document.getElementById('sub-folder-field'), dateSelectBox: document.getElementById('date-select-box'), dateSelect: document.getElementById('date-select'), dateInputBox: document.getElementById('date-input-box'), customDateInput: document.getElementById('custom-date-input'), subFolderName: document.getElementById('sub-folder-name'), cameraButton: document.getElementById('camera-button'), galleryButton: document.getElementById('gallery-button'), cameraInput: document.getElementById('camera-input'), galleryInput: document.getElementById('gallery-input'), queueCard: document.getElementById('queue-card'), queue: document.getElementById('queue'), queueSummary: document.getElementById('queue-summary'), keepOriginal: document.getElementById('keep-original'), uploadButton: document.getElementById('upload-button'), uploadMessage: document.getElementById('upload-message'), driveFolderLink: document.getElementById('drive-folder-link')
       };
 
       function showMessage(element, message, isError) { element.textContent = message; element.classList.remove('hidden'); element.classList.toggle('error', Boolean(isError)); }
@@ -229,9 +254,37 @@
         elements.dateInputBox.classList.toggle('hidden', !isNew);
         elements.hideEventButton.classList.toggle('hidden', isNew);
 
-        if (!isNew) {
+        if (isNew) {
+          renderNewEventLabel();
+        } else {
           renderDates();
         }
+      }
+
+      // 새 행사 이름은 팝업에서만 받는다. 화면에는 정해진 이름만 보여준다.
+      let nameBeforeEdit = '';
+      function openNewEventDialog() {
+        nameBeforeEdit = elements.newEventName.value;
+        elements.newEventDialog.showModal();
+        elements.newEventName.focus();
+        elements.newEventName.select();
+      }
+
+      function renderNewEventLabel() {
+        const name = elements.newEventName.value.trim();
+        elements.newEventLabel.textContent = name || '행사 이름을 아직 입력하지 않았습니다';
+        elements.newEventLabel.classList.toggle('empty', !name);
+        elements.newEventEdit.textContent = name ? '이름 바꾸기' : '이름 입력';
+      }
+
+      // 회차 폴더는 사람마다 다르게 적으면 폴더가 흩어진다. 기본은 접어두고, 접을 땐 값도 비운다.
+      function toggleSubFolder() {
+        const collapsed = elements.subFolderField.classList.toggle('hidden');
+        if (collapsed) { elements.subFolderName.value = ''; }
+        elements.subFolderToggle.textContent = collapsed
+          ? '＋ 회차 · 세부 폴더로 나누기 (보통은 안 씁니다)'
+          : '－ 회차 · 세부 폴더 쓰지 않기';
+        if (!collapsed) { elements.subFolderName.focus(); }
       }
 
       function renderDates() {
@@ -388,8 +441,17 @@
       elements.unlockButton.addEventListener('click', unlock);
       elements.accessCode.addEventListener('keydown', (event) => { if (event.key === 'Enter') unlock(); });
       elements.eventFilter.addEventListener('input', renderEvents);
-      elements.eventSelect.addEventListener('change', onEventChange);
+      elements.eventSelect.addEventListener('change', () => {
+        onEventChange();
+        if (elements.eventSelect.value === NEW_EVENT_VALUE) { openNewEventDialog(); }
+      });
       elements.hideEventButton.addEventListener('click', hideSelectedEvent);
+      elements.newEventEdit.addEventListener('click', openNewEventDialog);
+      elements.newEventDialog.addEventListener('close', () => {
+        if (elements.newEventDialog.returnValue !== 'ok') { elements.newEventName.value = nameBeforeEdit; }
+        renderNewEventLabel();
+      });
+      elements.subFolderToggle.addEventListener('click', toggleSubFolder);
       elements.cameraButton.addEventListener('click', () => elements.cameraInput.click());
       elements.galleryButton.addEventListener('click', () => elements.galleryInput.click());
       elements.cameraInput.addEventListener('change', (event) => addFiles(event.target.files));
