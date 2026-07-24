@@ -228,6 +228,7 @@
           elements.customDateInput.value = localDate();
           renderEvents();
           elements.unlockCard.classList.add('hidden'); elements.uploader.classList.remove('hidden');
+          saveSession();
         } catch (error) { showMessage(elements.unlockMessage, error.message || '인증에 실패했습니다.', true); }
         finally { elements.unlockButton.disabled = false; }
       }
@@ -278,13 +279,71 @@
       }
 
       // 회차 폴더는 사람마다 다르게 적으면 폴더가 흩어진다. 기본은 접어두고, 접을 땐 값도 비운다.
+      function setSubFolderOpen(open) {
+        elements.subFolderField.classList.toggle('hidden', !open);
+        if (!open) { elements.subFolderName.value = ''; }
+        elements.subFolderToggle.textContent = open
+          ? '－ 회차 · 세부 폴더 쓰지 않기'
+          : '＋ 회차 · 세부 폴더로 나누기 (보통은 안 씁니다)';
+      }
+
       function toggleSubFolder() {
-        const collapsed = elements.subFolderField.classList.toggle('hidden');
-        if (collapsed) { elements.subFolderName.value = ''; }
-        elements.subFolderToggle.textContent = collapsed
-          ? '＋ 회차 · 세부 폴더로 나누기 (보통은 안 씁니다)'
-          : '－ 회차 · 세부 폴더 쓰지 않기';
-        if (!collapsed) { elements.subFolderName.focus(); }
+        const willOpen = elements.subFolderField.classList.contains('hidden');
+        setSubFolderOpen(willOpen);
+        if (willOpen) { elements.subFolderName.focus(); }
+        saveSession();
+      }
+
+      /**
+       * 카메라 앱을 띄우면 폰이 이 화면을 버렸다가 다시 여는 일이 잦다.
+       * 그때 접속코드와 고른 행사가 날아가 첫 화면으로 돌아가므로 탭 저장소에 남겨둔다.
+       * (탭을 닫으면 같이 지워진다 — 폰에 접속코드가 계속 남지 않는다.)
+       */
+      const SESSION_KEY = 'eventPhotoSession';
+
+      function saveSession() {
+        if (!state.accessCode) { return; }
+        try {
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+            accessCode: state.accessCode,
+            events: state.events,
+            eventId: elements.eventSelect.value,
+            newEventName: elements.newEventName.value,
+            eventDate: elements.customDateInput.value,
+            dateChoice: elements.dateSelect.value,
+            subFolderName: elements.subFolderName.value,
+            keepOriginal: elements.keepOriginal.checked
+          }));
+        } catch (err) {
+          // 저장 공간이 막힌 기기에서는 그냥 예전처럼 동작한다.
+        }
+      }
+
+      function restoreSession() {
+        let saved = null;
+        try { saved = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); } catch (err) { return; }
+        if (!saved || !saved.accessCode) { return; }
+
+        state.accessCode = saved.accessCode;
+        state.events = Array.isArray(saved.events) ? saved.events : [];
+        elements.customDateInput.value = saved.eventDate || localDate();
+        elements.newEventName.value = saved.newEventName || '';
+        elements.keepOriginal.checked = Boolean(saved.keepOriginal);
+
+        renderEvents();
+        if (saved.eventId && [...elements.eventSelect.options].some((option) => option.value === saved.eventId)) {
+          elements.eventSelect.value = saved.eventId;
+          onEventChange();
+          if (saved.dateChoice) { elements.dateSelect.value = saved.dateChoice; }
+        }
+        if (saved.subFolderName) {
+          setSubFolderOpen(true);
+          elements.subFolderName.value = saved.subFolderName;
+        }
+
+        elements.unlockCard.classList.add('hidden');
+        elements.uploader.classList.remove('hidden');
+        showMessage(elements.eventMessage, '화면이 다시 열려서 하던 자리로 돌아왔습니다. 방금 찍은 사진은 한 번 더 선택해 주세요.', false);
       }
 
       function renderDates() {
@@ -443,6 +502,7 @@
       elements.eventFilter.addEventListener('input', renderEvents);
       elements.eventSelect.addEventListener('change', () => {
         onEventChange();
+        saveSession();
         if (elements.eventSelect.value === NEW_EVENT_VALUE) { openNewEventDialog(); }
       });
       elements.hideEventButton.addEventListener('click', hideSelectedEvent);
@@ -450,13 +510,19 @@
       elements.newEventDialog.addEventListener('close', () => {
         if (elements.newEventDialog.returnValue !== 'ok') { elements.newEventName.value = nameBeforeEdit; }
         renderNewEventLabel();
+        saveSession();
       });
       elements.subFolderToggle.addEventListener('click', toggleSubFolder);
-      elements.cameraButton.addEventListener('click', () => elements.cameraInput.click());
-      elements.galleryButton.addEventListener('click', () => elements.galleryInput.click());
+      // 카메라 앱으로 넘어가기 직전에 반드시 저장해 둔다 — 돌아왔을 때 화면이 새로 열려 있을 수 있다.
+      elements.uploader.addEventListener('change', saveSession);
+      elements.uploader.addEventListener('input', saveSession);
+      elements.cameraButton.addEventListener('click', () => { saveSession(); elements.cameraInput.click(); });
+      elements.galleryButton.addEventListener('click', () => { saveSession(); elements.galleryInput.click(); });
       elements.cameraInput.addEventListener('change', (event) => addFiles(event.target.files));
       elements.galleryInput.addEventListener('change', (event) => addFiles(event.target.files));
       elements.uploadButton.addEventListener('click', uploadAll);
+
+      restoreSession();
     </script>
   </body>
 </html>
