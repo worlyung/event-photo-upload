@@ -39,6 +39,8 @@
       dialog::backdrop { background:rgba(20,33,27,.45); }
       dialog h2 { margin:0; font-size:18px; letter-spacing:-.03em; }
       .dialog-actions { display:grid; grid-template-columns:1fr 1.4fr; gap:10px; }
+      .sticky-upload { position:sticky; bottom:14px; box-shadow:0 10px 24px rgba(11,107,74,.3); }
+      .pending-note { margin:0; padding:12px 14px; border-radius:12px; background:#fff6e8; color:#8a4b00; font-size:14px; font-weight:650; }
       @media (max-width:390px) { main { padding-inline:14px; } .card { padding:16px; } }
     </style>
   </head>
@@ -96,7 +98,7 @@
           </div>
 
           <div class="divider"></div>
-          <p class="hint">사진은 선택한 행사, 날짜 및 회차 폴더에 바로 저장됩니다.</p>
+          <p class="hint">사진을 고른 다음, <b>아래 초록색 [업로드하기] 버튼</b>을 눌러야 드라이브로 올라갑니다.</p>
           <div class="photo-actions">
             <button id="camera-button" type="button"><svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h3l1.4-2h7.2L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg>카메라로 촬영</button>
             <button id="gallery-button" type="button"><svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m4 18 5-5 3 3 3-3 5 5"/></svg>갤러리에서 선택</button>
@@ -107,12 +109,13 @@
         <section id="queue-card" class="card stack hidden" aria-labelledby="queue-title">
           <div><h2 id="queue-title">업로드할 사진</h2><p id="queue-summary" class="hint"></p></div>
           <ul id="queue" class="queue"></ul>
+          <p id="pending-note" class="pending-note hidden">⚠️ 아직 올라가지 않았습니다. 아래 초록색 버튼을 눌러 주세요.</p>
           <label class="check"><input id="keep-original" type="checkbox">원본 화질 그대로 올리기 (느립니다)</label>
           <p id="upload-message" class="notice hidden" role="alert"></p>
           <a id="drive-folder-link" class="btn-link drive-btn hidden" target="_blank" rel="noopener">
             📁 구글 드라이브 폴더에서 사진 보기
           </a>
-          <button id="upload-button" class="primary" type="button">사진 업로드하기</button>
+          <button id="upload-button" class="primary sticky-upload" type="button">사진 업로드하기</button>
         </section>
       </section>
       <p class="footer">업로드하는 동안 이 화면을 켜두세요. 다른 앱으로 넘어가면 멈출 수 있습니다.</p>
@@ -140,9 +143,9 @@
       const MAX_EDGE = 2048;        // 줄일 때 긴 변 기준 (px)
       const JPEG_QUALITY = 0.85;
 
-      const state = { accessCode: '', events: [], queue: [], lastFolderUrl: '' };
+      const state = { accessCode: '', events: [], queue: [], lastFolderUrl: '', uploading: false };
       const elements = {
-        unlockCard: document.getElementById('unlock-card'), unlockButton: document.getElementById('unlock-button'), accessCode: document.getElementById('access-code'), unlockMessage: document.getElementById('unlock-message'), uploader: document.getElementById('uploader'), eventFilter: document.getElementById('event-filter'), eventSelect: document.getElementById('event-select'), hideEventButton: document.getElementById('hide-event-button'), eventMessage: document.getElementById('event-message'), newEventBox: document.getElementById('new-event-box'), newEventLabel: document.getElementById('new-event-label'), newEventEdit: document.getElementById('new-event-edit'), newEventDialog: document.getElementById('new-event-dialog'), newEventName: document.getElementById('new-event-name'), subFolderToggle: document.getElementById('sub-folder-toggle'), subFolderField: document.getElementById('sub-folder-field'), dateSelectBox: document.getElementById('date-select-box'), dateSelect: document.getElementById('date-select'), dateInputBox: document.getElementById('date-input-box'), customDateInput: document.getElementById('custom-date-input'), subFolderName: document.getElementById('sub-folder-name'), cameraButton: document.getElementById('camera-button'), galleryButton: document.getElementById('gallery-button'), cameraInput: document.getElementById('camera-input'), galleryInput: document.getElementById('gallery-input'), queueCard: document.getElementById('queue-card'), queue: document.getElementById('queue'), queueSummary: document.getElementById('queue-summary'), keepOriginal: document.getElementById('keep-original'), uploadButton: document.getElementById('upload-button'), uploadMessage: document.getElementById('upload-message'), driveFolderLink: document.getElementById('drive-folder-link')
+        unlockCard: document.getElementById('unlock-card'), unlockButton: document.getElementById('unlock-button'), accessCode: document.getElementById('access-code'), unlockMessage: document.getElementById('unlock-message'), uploader: document.getElementById('uploader'), eventFilter: document.getElementById('event-filter'), eventSelect: document.getElementById('event-select'), hideEventButton: document.getElementById('hide-event-button'), eventMessage: document.getElementById('event-message'), newEventBox: document.getElementById('new-event-box'), newEventLabel: document.getElementById('new-event-label'), newEventEdit: document.getElementById('new-event-edit'), newEventDialog: document.getElementById('new-event-dialog'), newEventName: document.getElementById('new-event-name'), subFolderToggle: document.getElementById('sub-folder-toggle'), subFolderField: document.getElementById('sub-folder-field'), dateSelectBox: document.getElementById('date-select-box'), dateSelect: document.getElementById('date-select'), dateInputBox: document.getElementById('date-input-box'), customDateInput: document.getElementById('custom-date-input'), subFolderName: document.getElementById('sub-folder-name'), cameraButton: document.getElementById('camera-button'), galleryButton: document.getElementById('gallery-button'), cameraInput: document.getElementById('camera-input'), galleryInput: document.getElementById('gallery-input'), queueCard: document.getElementById('queue-card'), queue: document.getElementById('queue'), queueSummary: document.getElementById('queue-summary'), pendingNote: document.getElementById('pending-note'), keepOriginal: document.getElementById('keep-original'), uploadButton: document.getElementById('upload-button'), uploadMessage: document.getElementById('upload-message'), driveFolderLink: document.getElementById('drive-folder-link')
       };
 
       function showMessage(element, message, isError) { element.textContent = message; element.classList.remove('hidden'); element.classList.toggle('error', Boolean(isError)); }
@@ -390,6 +393,7 @@
       }
 
       function addFiles(fileList) {
+        hideMessage(elements.uploadMessage);
         for (const file of fileList) {
           if (!file.type.startsWith('image/')) { continue; }
           if (file.size > 20 * 1024 * 1024) { showMessage(elements.uploadMessage, '20MB를 넘는 사진은 제외했습니다.', true); continue; }
@@ -399,12 +403,26 @@
         elements.galleryInput.value = '';
         elements.driveFolderLink.classList.add('hidden');
         renderQueue();
+        // 카메라에서 돌아오면 화면이 위로 올라가 있어 업로드 버튼이 안 보인다. 목록으로 데려간다.
+        elements.queueCard.scrollIntoView({ behavior: 'smooth', block: 'end' });
       }
 
       function renderQueue() {
         const hasFiles = state.queue.length > 0;
         elements.queueCard.classList.toggle('hidden', !hasFiles);
-        elements.queueSummary.textContent = hasFiles ? state.queue.length + '장 선택됨' : '';
+
+        // 사진을 고른 것과 실제로 올린 것은 다르다. 그 차이가 한눈에 보여야 한다.
+        const pending = state.queue.filter((item) => item.status === 'ready' || item.status === 'failed').length;
+        const done = state.queue.filter((item) => item.status === 'success').length;
+        elements.queueSummary.textContent = [
+          pending ? pending + '장 대기 중' : '',
+          done ? done + '장 올라감' : ''
+        ].filter(Boolean).join(' · ');
+        elements.pendingNote.classList.toggle('hidden', state.uploading || pending === 0);
+        elements.uploadButton.disabled = state.uploading || pending === 0;
+        elements.uploadButton.textContent = state.uploading
+          ? '업로드 중…'
+          : (pending ? '사진 ' + pending + '장 업로드하기' : '모두 올렸습니다');
         elements.queue.replaceChildren(...state.queue.map((item) => {
           const li = document.createElement('li');
           li.className = 'item';
@@ -478,7 +496,8 @@
 
         const ready = state.queue.filter((item) => item.status === 'ready' || item.status === 'failed');
         if (!ready.length) return;
-        elements.uploadButton.disabled = true;
+        state.uploading = true;
+        renderQueue();
         hideMessage(elements.uploadMessage);
         elements.driveFolderLink.classList.add('hidden');
         await keepScreenAwake(true);
@@ -492,6 +511,8 @@
         };
         await Promise.all(Array.from({ length: Math.min(3, ready.length) }, worker));
         await keepScreenAwake(false);
+        state.uploading = false;
+        renderQueue();
         const failed = state.queue.filter((item) => item.status === 'failed').length;
 
         if (failed) {
@@ -503,7 +524,6 @@
             elements.driveFolderLink.classList.remove('hidden');
           }
         }
-        elements.uploadButton.disabled = false;
       }
 
       elements.unlockButton.addEventListener('click', unlock);
