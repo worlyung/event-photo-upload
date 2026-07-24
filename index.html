@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>행사사진 업로드</title>
+    <style>
+      :root { --ink:#14211b; --muted:#647068; --line:#d8dfd9; --paper:#f7f8f5; --surface:#fff; --brand:#0b6b4a; --brand-dark:#064931; --warn:#b34700; --danger:#a92525; --radius:20px; }
+      * { box-sizing:border-box; }
+      body { margin:0; min-width:320px; background:var(--paper); color:var(--ink); font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+      main { max-width:560px; margin:0 auto; padding:28px 18px 44px; }
+      header { display:flex; gap:13px; align-items:center; margin:12px 0 28px; }
+      .mark { display:grid; place-items:center; width:46px; height:46px; border-radius:14px; color:#fff; background:var(--brand); }
+      h1 { margin:0; font-size:22px; letter-spacing:-.04em; } .eyebrow { margin:0 0 2px; color:var(--muted); font-size:13px; }
+      .card { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:20px; box-shadow:0 10px 25px rgba(20,33,27,.045); }
+      .stack { display:grid; gap:16px; } .hidden { display:none !important; }
+      label { display:grid; gap:7px; font-weight:650; font-size:14px; }
+      input,select { width:100%; min-height:48px; padding:11px 12px; border:1px solid #b9c4bc; border-radius:12px; background:#fff; color:var(--ink); font:inherit; }
+      input:focus,select:focus,button:focus-visible { outline:3px solid rgba(11,107,74,.23); outline-offset:2px; }
+      button,.btn-link { border:0; border-radius:14px; min-height:52px; padding:12px 16px; cursor:pointer; font:700 16px/1 inherit; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+      button:disabled { cursor:not-allowed; opacity:.52; } .primary { color:#fff; background:var(--brand); } .primary:hover { background:var(--brand-dark); }
+      .drive-btn { background:#e8f3ee; color:var(--brand-dark); border:1px solid #b8d7c8; width:100%; margin-top:8px; font-size:15px; } .drive-btn:hover { background:#d4e8dd; }
+      .photo-actions { display:grid; grid-template-columns:1fr 1fr; gap:12px; } .photo-actions button { min-height:112px; display:grid; place-items:center; align-content:center; gap:8px; color:var(--ink); background:#edf4ef; border:1px solid #c8d9cc; }
+      .photo-actions button:hover { background:#e1eee4; } .icon { width:30px; height:30px; } .hint { margin:0; color:var(--muted); font-size:14px; } .notice { margin:0; padding:12px 14px; border-radius:12px; background:#eef5ef; color:#24513b; font-size:14px; } .error { background:#fff1f0; color:var(--danger); }
+      .queue { display:grid; gap:9px; margin:0; padding:0; list-style:none; } .item { display:grid; grid-template-columns:40px 1fr auto; gap:11px; align-items:center; padding:11px; border:1px solid var(--line); border-radius:14px; } .thumb { display:grid; place-items:center; width:40px; height:40px; border-radius:10px; color:var(--brand); background:#eaf3ec; } .file-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:650; } .file-meta { color:var(--muted); font-size:12px; } .status { font-size:12px; font-weight:700; color:var(--muted); } .status.success { color:var(--brand); } .status.failed { color:var(--danger); }
+      .divider { height:1px; background:var(--line); margin:4px 0; } .footer { margin:22px 2px 0; color:var(--muted); font-size:12px; text-align:center; }
+      @media (max-width:390px) { main { padding-inline:14px; } .card { padding:16px; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h3l1.4-2h7.2L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg></div>
+        <div><p class="eyebrow">현장 기록을 바로 모으는 곳</p><h1>행사사진 업로드</h1></div>
+      </header>
+
+      <section id="unlock-card" class="card stack" aria-labelledby="unlock-title">
+        <div><h2 id="unlock-title">사진을 올릴 준비</h2><p class="hint">운영 담당자에게 받은 공통 접속코드를 입력해 주세요.</p></div>
+        <label>접속코드<input id="access-code" type="password" autocomplete="one-time-code" minlength="6" required></label>
+        <p id="unlock-message" class="notice hidden" role="alert"></p>
+        <button id="unlock-button" class="primary" type="button">업로드 시작하기</button>
+      </section>
+
+      <section id="uploader" class="hidden stack" aria-live="polite">
+        <div class="card stack">
+          <label>행사 구분
+            <select id="event-select" aria-label="행사 선택"></select>
+          </label>
+
+          <div id="new-event-box" class="stack">
+            <label>행사 이름 (드라이브 폴더명 입력)
+              <input id="new-event-name" type="text" placeholder="예: 2026_신년회_행사" required>
+            </label>
+          </div>
+
+          <div id="date-select-box" class="hidden">
+            <label>촬영 날짜 (선택)
+              <select id="date-select" aria-label="촬영 날짜"></select>
+            </label>
+          </div>
+
+          <div id="date-input-box">
+            <label>촬영 날짜
+              <input id="custom-date-input" type="date">
+            </label>
+          </div>
+
+          <div>
+            <label>회차 / 세부 폴더 (선택 사항)
+              <input id="sub-folder-name" type="text" placeholder="예: 1회차, 오전세션, A팀 (비워두면 생략)">
+            </label>
+          </div>
+
+          <div class="divider"></div>
+          <p class="hint">사진은 선택한 행사, 날짜 및 회차 폴더에 바로 저장됩니다.</p>
+          <div class="photo-actions">
+            <button id="camera-button" type="button"><svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h3l1.4-2h7.2L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg>카메라로 촬영</button>
+            <button id="gallery-button" type="button"><svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m4 18 5-5 3 3 3-3 5 5"/></svg>갤러리에서 선택</button>
+          </div>
+          <input id="camera-input" class="hidden" type="file" accept="image/*" capture="environment">
+          <input id="gallery-input" class="hidden" type="file" accept="image/*" multiple>
+        </div>
+        <section id="queue-card" class="card stack hidden" aria-labelledby="queue-title">
+          <div><h2 id="queue-title">업로드할 사진</h2><p id="queue-summary" class="hint"></p></div>
+          <ul id="queue" class="queue"></ul>
+          <p id="upload-message" class="notice hidden" role="alert"></p>
+          <a id="drive-folder-link" class="btn-link drive-btn hidden" target="_blank" rel="noopener">
+            📁 구글 드라이브 폴더에서 사진 보기
+          </a>
+          <button id="upload-button" class="primary" type="button">사진 업로드하기</button>
+        </section>
+      </section>
+      <p class="footer">업로드가 끝날 때까지 이 화면을 닫지 말아 주세요.</p>
+    </main>
+    <script>
+      // 앱스 스크립트 웹앱 주소. [배포 → 새 배포]로 주소가 바뀌면 여기도 같이 바꿀 것.
+      const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxf3eo-67Mc_vwNpzIcMLGTYzg8SicUgqtUCrLAkb9ULwZZgc64mjUShqHlrBpulm-FPw/exec';
+
+      const NEW_EVENT_VALUE = '__NEW_EVENT__';
+      const state = { accessCode: '', events: [], queue: [], lastFolderUrl: '' };
+      const elements = {
+        unlockCard: document.getElementById('unlock-card'), unlockButton: document.getElementById('unlock-button'), accessCode: document.getElementById('access-code'), unlockMessage: document.getElementById('unlock-message'), uploader: document.getElementById('uploader'), eventSelect: document.getElementById('event-select'), newEventBox: document.getElementById('new-event-box'), newEventName: document.getElementById('new-event-name'), dateSelectBox: document.getElementById('date-select-box'), dateSelect: document.getElementById('date-select'), dateInputBox: document.getElementById('date-input-box'), customDateInput: document.getElementById('custom-date-input'), subFolderName: document.getElementById('sub-folder-name'), cameraButton: document.getElementById('camera-button'), galleryButton: document.getElementById('gallery-button'), cameraInput: document.getElementById('camera-input'), galleryInput: document.getElementById('gallery-input'), queueCard: document.getElementById('queue-card'), queue: document.getElementById('queue'), queueSummary: document.getElementById('queue-summary'), uploadButton: document.getElementById('upload-button'), uploadMessage: document.getElementById('upload-message'), driveFolderLink: document.getElementById('drive-folder-link')
+      };
+
+      function showMessage(element, message, isError) { element.textContent = message; element.classList.remove('hidden'); element.classList.toggle('error', Boolean(isError)); }
+      function hideMessage(element) { element.classList.add('hidden'); element.textContent = ''; element.classList.remove('error'); }
+      function localDate() { return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }); }
+      function formatBytes(bytes) { return bytes >= 1024 * 1024 ? (bytes / (1024 * 1024)).toFixed(1) + 'MB' : Math.ceil(bytes / 1024) + 'KB'; }
+      function datesFor(event) { const dates = []; const cursor = new Date(event.startDate + 'T00:00:00'); const end = new Date(event.endDate + 'T00:00:00'); while (cursor <= end) { dates.push(cursor.toISOString().slice(0, 10)); cursor.setDate(cursor.getDate() + 1); } return dates; }
+
+      // 구글 계정이 여러 개 로그인된 기기는 script.google.com 주소를 직접 열지 못한다.
+      // 그래서 이 화면은 구글 밖에 두고, 로그인 정보 없는 요청으로 서버를 부른다.
+      async function post(fields) {
+        let json;
+        try {
+          const response = await fetch(WEB_APP_URL, { method: 'POST', body: new URLSearchParams(fields) });
+          json = await response.json();
+        } catch (err) {
+          throw new Error('서버에 연결하지 못했습니다. 인터넷 상태를 확인해 주세요.');
+        }
+        if (!json || json.status !== 'success') {
+          throw new Error((json && json.message) || '요청 처리에 실패했습니다.');
+        }
+        return json.data;
+      }
+
+      function readAsBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+          reader.onerror = () => reject(new Error('사진을 읽지 못했습니다.'));
+          reader.readAsDataURL(file);
+        });
+      }
+
+      async function unlock() {
+        const code = elements.accessCode.value.trim();
+        if (code.length < 6) { showMessage(elements.unlockMessage, '접속코드를 6자 이상 입력해 주세요.', true); return; }
+        elements.unlockButton.disabled = true; hideMessage(elements.unlockMessage);
+        try {
+          state.events = await post({ action: 'getActiveEvents', staffCode: code }) || [];
+          state.accessCode = code; renderEvents(); elements.unlockCard.classList.add('hidden'); elements.uploader.classList.remove('hidden');
+        } catch (error) { showMessage(elements.unlockMessage, error.message || '인증에 실패했습니다.', true); }
+        finally { elements.unlockButton.disabled = false; }
+      }
+
+      function renderEvents() {
+        const options = [];
+        options.push(new Option('✏️ [새 행사 폴더 만들기] 직접 이름 입력', NEW_EVENT_VALUE));
+        state.events.forEach((event) => {
+          options.push(new Option('📁 기존 목록에서 선택: ' + event.name, event.id));
+        });
+        elements.eventSelect.replaceChildren(...options);
+
+        elements.eventSelect.value = NEW_EVENT_VALUE;
+        elements.customDateInput.value = localDate();
+        onEventChange();
+      }
+
+      function onEventChange() {
+        const selected = elements.eventSelect.value;
+        const isNew = selected === NEW_EVENT_VALUE;
+
+        elements.newEventBox.classList.toggle('hidden', !isNew);
+        elements.dateSelectBox.classList.toggle('hidden', isNew);
+        elements.dateInputBox.classList.toggle('hidden', !isNew);
+
+        if (!isNew) {
+          renderDates();
+        }
+      }
+
+      function renderDates() {
+        const event = state.events.find((item) => item.id === elements.eventSelect.value);
+        if (!event) return;
+        const dates = datesFor(event);
+        const preferred = dates.includes(localDate()) ? localDate() : dates[0];
+        elements.dateSelect.replaceChildren(...dates.map((date) => new Option(date, date)));
+        elements.dateSelect.value = preferred;
+      }
+
+      function addFiles(fileList) {
+        for (const file of fileList) {
+          if (!file.type.startsWith('image/')) { continue; }
+          if (file.size > 20 * 1024 * 1024) { showMessage(elements.uploadMessage, '20MB를 넘는 사진은 제외했습니다.', true); continue; }
+          state.queue.push({ id: crypto.randomUUID(), file, status: 'ready', message: '대기 중' });
+        }
+        elements.cameraInput.value = '';
+        elements.galleryInput.value = '';
+        elements.driveFolderLink.classList.add('hidden');
+        renderQueue();
+      }
+
+      function renderQueue() {
+        const hasFiles = state.queue.length > 0;
+        elements.queueCard.classList.toggle('hidden', !hasFiles);
+        elements.queueSummary.textContent = hasFiles ? state.queue.length + '장 선택됨' : '';
+        elements.queue.replaceChildren(...state.queue.map((item) => {
+          const li = document.createElement('li');
+          li.className = 'item';
+          li.innerHTML = '<div class="thumb" aria-hidden="true"><svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m4 18 5-5 3 3 3-3 5 5"/></svg></div><div><div class="file-name"></div><div class="file-meta"></div></div><span class="status"></span>';
+          li.querySelector('.file-name').textContent = item.file.name;
+          li.querySelector('.file-meta').textContent = formatBytes(item.file.size);
+          const status = li.querySelector('.status');
+          status.textContent = item.message;
+          status.classList.toggle('success', item.status === 'success');
+          status.classList.toggle('failed', item.status === 'failed');
+          return li;
+        }));
+      }
+
+      async function makeUploadFields(item) {
+        const isNew = elements.eventSelect.value === NEW_EVENT_VALUE;
+        return {
+          action: 'uploadPhoto',
+          staffCode: state.accessCode,
+          isNewEvent: isNew ? 'true' : 'false',
+          eventId: elements.eventSelect.value,
+          newEventName: elements.newEventName.value.trim(),
+          eventDate: isNew ? elements.customDateInput.value : elements.dateSelect.value,
+          subFolderName: elements.subFolderName.value.trim(),
+          photoName: item.file.name,
+          photoType: item.file.type,
+          photoBase64: await readAsBase64(item.file)
+        };
+      }
+
+      async function uploadOne(item) {
+        item.status = 'uploading';
+        item.message = '업로드 중';
+        renderQueue();
+        try {
+          const res = await post(await makeUploadFields(item));
+          item.status = 'success';
+          item.message = '완료';
+          if (res && res.folderUrl) {
+            state.lastFolderUrl = res.folderUrl;
+          }
+        } catch (error) {
+          item.status = 'failed';
+          item.message = error.message || '실패';
+        }
+        renderQueue();
+      }
+
+      async function uploadAll() {
+        const isNew = elements.eventSelect.value === NEW_EVENT_VALUE;
+        if (isNew && !elements.newEventName.value.trim()) {
+          showMessage(elements.uploadMessage, '새 행사 이름을 입력해 주세요.', true);
+          return;
+        }
+
+        const ready = state.queue.filter((item) => item.status === 'ready' || item.status === 'failed');
+        if (!ready.length) return;
+        elements.uploadButton.disabled = true;
+        hideMessage(elements.uploadMessage);
+        elements.driveFolderLink.classList.add('hidden');
+
+        let cursor = 0;
+        const worker = async () => {
+          while (cursor < ready.length) {
+            const item = ready[cursor++];
+            await uploadOne(item);
+          }
+        };
+        await Promise.all(Array.from({ length: Math.min(3, ready.length) }, worker));
+        const failed = state.queue.filter((item) => item.status === 'failed').length;
+
+        if (failed) {
+          showMessage(elements.uploadMessage, failed + '장은 실패했습니다. 버튼을 다시 눌러 재시도해 주세요.', true);
+        } else {
+          showMessage(elements.uploadMessage, '모든 사진을 구글 드라이브에 성공적으로 올렸습니다!', false);
+          if (state.lastFolderUrl) {
+            elements.driveFolderLink.href = state.lastFolderUrl;
+            elements.driveFolderLink.classList.remove('hidden');
+          }
+        }
+        elements.uploadButton.disabled = false;
+      }
+
+      elements.unlockButton.addEventListener('click', unlock);
+      elements.accessCode.addEventListener('keydown', (event) => { if (event.key === 'Enter') unlock(); });
+      elements.eventSelect.addEventListener('change', onEventChange);
+      elements.cameraButton.addEventListener('click', () => elements.cameraInput.click());
+      elements.galleryButton.addEventListener('click', () => elements.galleryInput.click());
+      elements.cameraInput.addEventListener('change', (event) => addFiles(event.target.files));
+      elements.galleryInput.addEventListener('change', (event) => addFiles(event.target.files));
+      elements.uploadButton.addEventListener('click', uploadAll);
+    </script>
+  </body>
+</html>
