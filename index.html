@@ -67,6 +67,7 @@
             <input id="event-filter" class="hidden" type="text" placeholder="🔎 행사 이름 검색 (비워두면 전체)" autocomplete="off">
             <select id="event-select" aria-label="행사 선택"></select>
           </label>
+          <a id="event-folder-link" class="btn-link drive-btn hidden" target="_blank" rel="noopener">📁 이 행사의 사진 폴더 열기</a>
           <button id="hide-event-button" class="ghost hidden" type="button">선택한 행사를 목록에서 내리기</button>
           <p id="event-message" class="notice hidden" role="alert"></p>
 
@@ -145,7 +146,7 @@
 
       const state = { accessCode: '', events: [], queue: [], lastFolderUrl: '', uploading: false };
       const elements = {
-        unlockCard: document.getElementById('unlock-card'), unlockButton: document.getElementById('unlock-button'), accessCode: document.getElementById('access-code'), unlockMessage: document.getElementById('unlock-message'), uploader: document.getElementById('uploader'), eventFilter: document.getElementById('event-filter'), eventSelect: document.getElementById('event-select'), hideEventButton: document.getElementById('hide-event-button'), eventMessage: document.getElementById('event-message'), newEventBox: document.getElementById('new-event-box'), newEventLabel: document.getElementById('new-event-label'), newEventEdit: document.getElementById('new-event-edit'), newEventDialog: document.getElementById('new-event-dialog'), newEventName: document.getElementById('new-event-name'), subFolderToggle: document.getElementById('sub-folder-toggle'), subFolderField: document.getElementById('sub-folder-field'), dateSelectBox: document.getElementById('date-select-box'), dateSelect: document.getElementById('date-select'), dateInputBox: document.getElementById('date-input-box'), customDateInput: document.getElementById('custom-date-input'), subFolderName: document.getElementById('sub-folder-name'), cameraButton: document.getElementById('camera-button'), galleryButton: document.getElementById('gallery-button'), cameraInput: document.getElementById('camera-input'), galleryInput: document.getElementById('gallery-input'), queueCard: document.getElementById('queue-card'), queue: document.getElementById('queue'), queueSummary: document.getElementById('queue-summary'), pendingNote: document.getElementById('pending-note'), keepOriginal: document.getElementById('keep-original'), uploadButton: document.getElementById('upload-button'), uploadMessage: document.getElementById('upload-message'), driveFolderLink: document.getElementById('drive-folder-link')
+        unlockCard: document.getElementById('unlock-card'), unlockButton: document.getElementById('unlock-button'), accessCode: document.getElementById('access-code'), unlockMessage: document.getElementById('unlock-message'), uploader: document.getElementById('uploader'), eventFilter: document.getElementById('event-filter'), eventSelect: document.getElementById('event-select'), eventFolderLink: document.getElementById('event-folder-link'), hideEventButton: document.getElementById('hide-event-button'), eventMessage: document.getElementById('event-message'), newEventBox: document.getElementById('new-event-box'), newEventLabel: document.getElementById('new-event-label'), newEventEdit: document.getElementById('new-event-edit'), newEventDialog: document.getElementById('new-event-dialog'), newEventName: document.getElementById('new-event-name'), subFolderToggle: document.getElementById('sub-folder-toggle'), subFolderField: document.getElementById('sub-folder-field'), dateSelectBox: document.getElementById('date-select-box'), dateSelect: document.getElementById('date-select'), dateInputBox: document.getElementById('date-input-box'), customDateInput: document.getElementById('custom-date-input'), subFolderName: document.getElementById('sub-folder-name'), cameraButton: document.getElementById('camera-button'), galleryButton: document.getElementById('gallery-button'), cameraInput: document.getElementById('camera-input'), galleryInput: document.getElementById('gallery-input'), queueCard: document.getElementById('queue-card'), queue: document.getElementById('queue'), queueSummary: document.getElementById('queue-summary'), pendingNote: document.getElementById('pending-note'), keepOriginal: document.getElementById('keep-original'), uploadButton: document.getElementById('upload-button'), uploadMessage: document.getElementById('upload-message'), driveFolderLink: document.getElementById('drive-folder-link')
       };
 
       function showMessage(element, message, isError) { element.textContent = message; element.classList.remove('hidden'); element.classList.toggle('error', Boolean(isError)); }
@@ -262,8 +263,38 @@
 
         if (isNew) {
           renderNewEventLabel();
+          elements.eventFolderLink.classList.add('hidden');
         } else {
           renderDates();
+          showEventFolder(state.events.find((item) => item.id === elements.eventSelect.value));
+        }
+      }
+
+      /**
+       * 고른 행사의 드라이브 폴더 링크를 띄운다.
+       * 주소를 아직 모르는 예전 행사는 서버에 한 번 물어보고, 사진이 없으면 링크를 감춘다.
+       */
+      let folderRequest = 0;
+      async function showEventFolder(event) {
+        elements.eventFolderLink.classList.add('hidden');
+        if (!event) { return; }
+        if (event.folderUrl) {
+          elements.eventFolderLink.href = event.folderUrl;
+          elements.eventFolderLink.classList.remove('hidden');
+          return;
+        }
+        const ticket = ++folderRequest;
+        try {
+          const res = await post({ action: 'getEventFolder', staffCode: state.accessCode, eventId: event.id });
+          if (ticket !== folderRequest) { return; }
+          if (res && res.folderUrl) {
+            event.folderUrl = res.folderUrl;
+            elements.eventFolderLink.href = res.folderUrl;
+            elements.eventFolderLink.classList.remove('hidden');
+            saveSession();
+          }
+        } catch (err) {
+          // 아직 사진이 없거나 예전 버전 서버면 링크를 그냥 감춘다.
         }
       }
 
