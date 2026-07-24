@@ -149,7 +149,9 @@
       function hideMessage(element) { element.classList.add('hidden'); element.textContent = ''; element.classList.remove('error'); }
       function localDate() { return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }); }
       function formatBytes(bytes) { return bytes >= 1024 * 1024 ? (bytes / (1024 * 1024)).toFixed(1) + 'MB' : Math.ceil(bytes / 1024) + 'KB'; }
-      function datesFor(event) { const dates = []; const cursor = new Date(event.startDate + 'T00:00:00'); const end = new Date(event.endDate + 'T00:00:00'); while (cursor <= end) { dates.push(cursor.toISOString().slice(0, 10)); cursor.setDate(cursor.getDate() + 1); } return dates; }
+      // toISOString 은 세계시로 바꿔버려 한국(+9시간)에서 하루 앞 날짜가 나온다. 반드시 현지 날짜로 만든다.
+      function toDateText(date) { return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0'); }
+      function datesFor(event) { const dates = []; const cursor = new Date(event.startDate + 'T00:00:00'); const end = new Date(event.endDate + 'T00:00:00'); while (cursor <= end) { dates.push(toDateText(cursor)); cursor.setDate(cursor.getDate() + 1); } return dates; }
 
       // 구글 계정이 여러 개 로그인된 기기는 script.google.com 주소를 직접 열지 못한다.
       // 그래서 이 화면은 구글 밖에 두고, 로그인 정보 없는 요청으로 서버를 부른다.
@@ -296,15 +298,18 @@
 
       /**
        * 카메라 앱을 띄우면 폰이 이 화면을 버렸다가 다시 여는 일이 잦다.
-       * 그때 접속코드와 고른 행사가 날아가 첫 화면으로 돌아가므로 탭 저장소에 남겨둔다.
-       * (탭을 닫으면 같이 지워진다 — 폰에 접속코드가 계속 남지 않는다.)
+       * 그때 접속코드와 고른 행사가 날아가 첫 화면으로 돌아가므로 저장해 둔다.
+       * 폰이 새 탭으로 다시 열어버리는 경우까지 살아남아야 해서 탭 전용 저장소는 쓰지 않고,
+       * 대신 SESSION_MAX_AGE 가 지나면 스스로 지워 접속코드가 폰에 오래 남지 않게 한다.
        */
       const SESSION_KEY = 'eventPhotoSession';
+      const SESSION_MAX_AGE = 12 * 60 * 60 * 1000;
 
       function saveSession() {
         if (!state.accessCode) { return; }
         try {
-          sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+          localStorage.setItem(SESSION_KEY, JSON.stringify({
+            savedAt: Date.now(),
             accessCode: state.accessCode,
             events: state.events,
             eventId: elements.eventSelect.value,
@@ -321,8 +326,12 @@
 
       function restoreSession() {
         let saved = null;
-        try { saved = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); } catch (err) { return; }
+        try { saved = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch (err) { return; }
         if (!saved || !saved.accessCode) { return; }
+        if (!saved.savedAt || Date.now() - saved.savedAt > SESSION_MAX_AGE) {
+          try { localStorage.removeItem(SESSION_KEY); } catch (err) {}
+          return;
+        }
 
         state.accessCode = saved.accessCode;
         state.events = Array.isArray(saved.events) ? saved.events : [];
